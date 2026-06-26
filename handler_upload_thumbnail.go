@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 
 	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/auth"
@@ -45,6 +46,17 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 	mediaType := header.Header.Get("Content-Type")
 	if mediaType == "" {
 		respondWithError(w, http.StatusBadRequest, "Missing Content-Type for thumbnail", nil)
+		return
+	}
+
+	mimeMediaType, _, err := mime.ParseMediaType(mediaType)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Content-Type for thumbnail", err)
+		return
+	}
+	if mimeMediaType != "image/jpeg" && mimeMediaType != "image/png" {
+		respondWithError(w, http.StatusBadRequest, "Thumbnail must be JPEG or PNG", nil)
+		return
 	}
 
 	imageData, err := io.ReadAll(file)
